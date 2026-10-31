@@ -1,1 +1,54 @@
 
+name: Update Herzen Calendar
+
+on:
+  schedule:
+    - cron: '17 */3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: herzen-calendar-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Generate calendar
+        run: python sync_herzen_v2.py
+
+      - name: Verify calendar
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          data = Path("herzen_schedule.ics").read_text()
+          count = data.count("BEGIN:VEVENT")
+          print("Calendar events:", count)
+          if count < 40:
+              raise SystemExit("Too few events; publication cancelled.")
+          PY
+
+      - name: Publish calendar
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add herzen_schedule.ics
+          if ! git diff --cached --quiet; then
+            git commit -m "Update calendar"
+            git push
+          fi
