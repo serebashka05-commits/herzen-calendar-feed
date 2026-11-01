@@ -166,7 +166,7 @@ def build_ics(events):
                       "DESCRIPTION:" + ics(event["description"])])
         # Одно напоминание за день — только для первого события.
         if earliest[event["day"]] is event:
-            lines.extend(["BEGIN:VALARM", "TRIGGER:-PT1H30M", "ACTION:DISPLAY",
+            lines.extend(["BEGIN:VALARM", "TRIGGER:-PT2H", "ACTION:DISPLAY",
                           "DESCRIPTION:" + ics("Скоро: " + event["subject"]), "END:VALARM"])
         lines.append("END:VEVENT")
     lines.append("END:VCALENDAR")
